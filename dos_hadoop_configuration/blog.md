@@ -49,7 +49,7 @@ export JAVA_HOME CLASSPATH PATH
 
 接着安装hadoop，过程放在下一部分，安装好了之后复制生成三个相同环境的虚拟机。我用的是parallels，相比于其他的比较稳定易用。
 
-![](./pics/copy_system.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/copy_system.png)
 
 接着就是分布式的部分了。纯的分布式是很难实现的，hadoop仍然是用一个master来集中式地管理数据节点，master并不存储数据，而是将数据存储在datanode之中，这里命名为slave1, slave2, slave3三个datanode，网络连接均为桥接。因此master需要能免密钥登陆到slave。添加节点的ip地址（为了在ip变化时候不用再重新配置，可以配置静态ip）：
 
@@ -88,7 +88,7 @@ cp .id_rsa.pub authorized_keys
 
 接着为了使master能够免密钥连接到slave，将master的公钥追加到每个slave的authorized_keys中。
 
-![](./pics/ssh_authorized_keys.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/ssh_authorized_keys.png)
 然后测试是否能够正常连接：
 
 ```bash
@@ -97,7 +97,7 @@ ssh slave1
 
 
 
-### 安装配置hadoop
+## 安装配置hadoop
 
 从官网下载hadoop3.2，解压到/usr/lib/。并且将读权限分配给hadoop用户
 
@@ -241,7 +241,7 @@ slave3
 
 
 
-### 启动
+## 启动
 
 格式化namenode
 
@@ -249,7 +249,7 @@ slave3
 hdfs namenode -format # 前提是已经将HADOOP_HOME添加到环境变量中
 ```
 
-![](./pics/formated.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/formated.png)
 
 如果看到如上INFO说明这一步成功了。然后运行start脚本：
 
@@ -257,17 +257,17 @@ hdfs namenode -format # 前提是已经将HADOOP_HOME添加到环境变量中
 ./sbin/start-all.sh # 在hadoop 2.x版本放在./bin/下面
 ```
 
-![](./pics/start_all.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/start_all.png)
 
 用``jps``查看Java进程，master应该包含NameNode, SecondaryNameNode, ResourceManager，slave应该包含DataNode, NodeManager。这里很常见的问题包括没有datanodes，没有访问权限，resouecemanager不能启动等，一些原因我写在下面了，大部分都是配置出了问题，查看log文件就能找到原因。
 
 通过``master:9870``可以网页查看集群状态。
 
-![](./pics/web.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/web.png)
 
 
 
-### WordCount示例程序
+## WordCount示例程序
 
 wordcount可以说是hadoop学习过程中的"hello world"，网上可以找到源码，也可以自己写，我这里直接用了官方$HADOOP_HOME/share/hadoop/mapreduce/下的示例程序。
 
@@ -279,7 +279,7 @@ hdfs dfs -put ~/Desktop/file*.txt /in
 hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.2.0.jar wordcount /in /out
 ```
 
-![](./pics/wordcount_res.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/wordcount_res.png)
 
 这里可以看到mapreduce分为map和reduce过程。mapreduce分为map，shuffle，reduce过程，先将大任务分到各个节点分别计算，然后shuffle是按照一定的规则将不同的key值分到不同的节点做整合，然后提交任务再reduce整合。查看结果：
 
@@ -287,13 +287,13 @@ hadoop jar share/hadoop/mapreduce/hadoop-mapreduce-examples-3.2.0.jar wordcount 
 hdfs dfs -cat /out/part-r-00000
 ```
 
-![](./pics/wordcount_out.png)
+![](https://github.com/liuoorui/MyBlog/raw/master/dos_hadoop_configuration/pics/wordcount_out.png)
 
 至此hadoop集群环境才能说是正确安装了。接下来就是修改wordcount代码自己玩了，上手后就可以自己写了。
 
 
 
-### 一些遇到的问题
+## 一些遇到的问题
 
 * 复制配置好的文件夹时候不小心复制错了，复制成了之前一次配置失败时候用过的文件夹，导致datanode启动一直失败，但是全程无提示。谷歌好久解决不了。后来看datanode的log文件找到错误的地方，是core-site.xml出了问题，修改之后重新格式化，启动成功。
 
@@ -311,4 +311,3 @@ hdfs dfs -cat /out/part-r-00000
   2. 更换为jdk8
 
 * 第一次运行wordcount程序时候将$HADOOP_HOME/etc/hadoop整个文件夹全传入作为输入，结果出错，根据log发现是内存不足，我的每个虚拟机只开了1G的内存。由此可见这样的配置只是仅仅能够作为熟悉hadoop分布式环境用途，根本达不到能够解决问题的条件。
-
